@@ -1,4 +1,14 @@
 #!/bin/bash
+set -u
+VERBOSE=N
+
+while getopts "v" OPT; do
+  case "$OPT" in
+  v)
+    VERBOSE="Y"
+    ;;
+  esac
+done
 
 MKTEMP_OPT="--suffix .txt stdin.XXXXXXXXXX"
 if [ -w . ]; then
@@ -8,11 +18,19 @@ TEMPNAME=$(mktemp $MKTEMP_OPT)
 
 on_exit() {
   sleep 5
-  if [ -f $TEMPNAME ]; then
+  if [ "$VERBOSE" == "Y" ]; then
     rm -v $TEMPNAME
+  else
+    rm $TEMPNAME
   fi
 }
 trap 'on_exit' EXIT
 
-echo "--> $TEMPNAME"
-tee -a $TEMPNAME && atom $TEMPNAME
+if [ "$VERBOSE" == "Y" ]; then
+  tee $TEMPNAME
+  echo "--> $TEMPNAME"
+else
+  cat $TEMPNAME
+fi
+
+[ $? -eq 0 ] && atom $TEMPNAME
