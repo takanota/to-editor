@@ -4,28 +4,46 @@ set -u
 VERBOSE=N
 [ -v EDITOR ] || EDITOR=gedit
 
+usage() {
+  echo "usage"
+  echo "  $0 [-e EDITOR] [-h] [-v]"
+  echo ""
+  echo "parameter"
+  echo "  -e EDITOR : editor path"
+  echo "  -h        : show this help"
+  echo "  -v        : verbose output"
+  echo ""
+}
+
 err() {
   echo "$@" >/dev/stderr
 }
 
-while getopts ":e:v" OPT; do
+while getopts "e:hv" OPT; do
   case "$OPT" in
   e)
     EDITOR="$OPTARG"
     ;;
+  h)
+    usage
+    exit 1
+    ;;
   v)
     VERBOSE="Y"
     ;;
+  *)
+    usage
+    exit 2
   esac
 done
 
 EDITOR_PATH=$(which $EDITOR)
 if [ -z "$EDITOR_PATH" ]; then
   err "editor is not exists: $EDITOR"
-  exit 1
+  exit 3
 elif [ ! -x "$EDITOR_PATH" ]; then
   err "editor is not executable: $EDITOR"
-  exit 1
+  exit 4
 fi
 
 MKTEMP_OPT="--suffix .txt stdin.XXXXXXXXXX"
