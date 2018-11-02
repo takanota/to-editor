@@ -2,7 +2,7 @@
 set -u
 
 VERBOSE=N
-[ -v EDITOR ] || EDITOR=gedit
+EDITOR_PATH=
 
 usage() {
   echo "usage"
@@ -22,7 +22,7 @@ err() {
 while getopts "e:hv" OPT; do
   case "$OPT" in
   e)
-    EDITOR="$OPTARG"
+    EDITOR_PATH="$OPTARG"
     ;;
   h)
     usage
@@ -37,12 +37,11 @@ while getopts "e:hv" OPT; do
   esac
 done
 
-EDITOR_PATH=$(which $EDITOR)
 if [ -z "$EDITOR_PATH" ]; then
-  err "editor is not exists: $EDITOR"
+  usage
   exit 3
 elif [ ! -x "$EDITOR_PATH" ]; then
-  err "editor is not executable: $EDITOR"
+  err "editor is not executable: $EDITOR_PATH"
   exit 4
 fi
 
@@ -70,6 +69,6 @@ else
 fi
 
 if [ $? -eq 0 ]; then
-  echo "starting $EDITOR $TEMPNAME ..."
-  "$EDITOR" "$TEMPNAME" 1>/dev/null 2>/dev/null &
+  echo "starting $EDITOR_PATH $TEMPNAME ..."
+  "$EDITOR_PATH" "$TEMPNAME" 1>/dev/null 2>/dev/null &
 fi
