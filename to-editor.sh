@@ -65,7 +65,7 @@ if [ "$VERBOSE" == "Y" ]; then
   tee "$TEMPNAME"
   echo "--> $TEMPNAME"
 else
-  cat "$TEMPNAME"
+  cat > "$TEMPNAME"
 fi
 
 if [ $? -eq 0 ]; then
