@@ -6,6 +6,8 @@ usage() {
   echo ""
   echo "parameter"
   echo "  -e, --editor=EDITOR editor path"
+  echo "  -d, --tmpdir=DIR    directory to create temporary file"
+  echo "                      (default: current directory)"
   echo "  -h, --help          show this help"
   echo "  -v, --version       verbose output"
   echo ""
@@ -17,6 +19,7 @@ err() {
 
 VERBOSE=N
 EDITOR_PATH=
+TEMPDIR=.
 
 while [ -n "$1" ]; do
   case "$1" in
@@ -26,6 +29,13 @@ while [ -n "$1" ]; do
     ;;
   --editor=*)
     EDITOR_PATH=${1#*=}
+    ;;
+  -d|--tmpdir)
+    shift
+    TEMPDIR=$1
+    ;;
+  --tmpdir=*)
+    TEMPDIR=${1#*=}
     ;;
   -h|--help)
     usage
@@ -52,12 +62,7 @@ elif [ ! -x "$EDITOR_PATH" ]; then
   exit 4
 fi
 
-MKTEMP_OPT="--suffix .txt stdin.XXXXXXXXXX"
-if [ -w . ]; then
-  MKTEMP_OPT="-p . $MKTEMP_OPT"
-fi
-TEMPNAME=$(mktemp $MKTEMP_OPT)
-
+TEMPNAME=$(mktemp $TEMPDIR/stdin.XXXXXXXXXX.txt) || exit $?
 on_exit() {
   sleep 5
   if [ "$VERBOSE" == "Y" ]; then
