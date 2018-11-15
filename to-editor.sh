@@ -1,43 +1,50 @@
 #!/bin/bash
-set -u
-
-VERBOSE=N
-EDITOR_PATH=
 
 usage() {
   echo "usage"
-  echo "  $0 [-e EDITOR] [-h] [-v]"
+  echo "  $0 [OPTION...]"
   echo ""
   echo "parameter"
-  echo "  -e EDITOR : editor path"
-  echo "  -h        : show this help"
-  echo "  -v        : verbose output"
+  echo "  -e, --editor=EDITOR editor path"
+  echo "  -h, --help          show this help"
+  echo "  -v, --version       verbose output"
   echo ""
 }
 
 err() {
-  echo "$@" >/dev/stderr
+  echo "[ERROR] $@" >/dev/stderr
 }
 
-while getopts "e:hv" OPT; do
-  case "$OPT" in
-  e)
-    EDITOR_PATH="$OPTARG"
+VERBOSE=N
+EDITOR_PATH=
+
+while [ -n "$1" ]; do
+  case "$1" in
+  -e|--editor)
+    shift
+    EDITOR_PATH=$1
     ;;
-  h)
+  --editor=*)
+    EDITOR_PATH=${1#*=}
+    ;;
+  -h|--help)
     usage
     exit 1
     ;;
-  v)
-    VERBOSE="Y"
+  -v|--verbose)
+    VERBOSE=Y
     ;;
   *)
+    err "Unknown option $1"
     usage
     exit 2
   esac
+  shift
 done
 
+set -u
 if [ -z "$EDITOR_PATH" ]; then
+  err "--editor=EDITOR is required"
   usage
   exit 3
 elif [ ! -x "$EDITOR_PATH" ]; then
