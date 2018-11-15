@@ -66,7 +66,7 @@ on_exit() {
     rm "$TEMPNAME"
   fi
 }
-trap 'on_exit' EXIT
+trap 'on_exit &' EXIT
 
 if [ "$VERBOSE" == "Y" ]; then
   tee "$TEMPNAME"
