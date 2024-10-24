@@ -2,6 +2,7 @@
 #
 # to-editor.sh: open stdin to editor
 #
+set -euo pipefail
 
 usage() {
   echo "usage"
@@ -22,40 +23,40 @@ err() {
   echo "[ERROR] $@" >/dev/stderr
 }
 
-VERBOSE=N
-EDITOR_PATH=
-TEMPDIR=.
-CLEAR_SECONDS=5
+verbose=N
+editor_path=
+tempdir=.
+clear_seconds=5
 
-while [ -n "$1" ]; do
+while [ $# -gt 0 ]; do
   case "$1" in
   -e|--editor)
     shift
-    EDITOR_PATH=$1
+    editor_path=$1
     ;;
   --editor=*)
-    EDITOR_PATH=${1#*=}
+    editor_path=${1#*=}
     ;;
   -d|--tmpdir)
     shift
-    TEMPDIR=$1
+    tempdir=$1
     ;;
   --tmpdir=*)
-    TEMPDIR=${1#*=}
+    tempdir=${1#*=}
     ;;
   -c|--clear)
     shift
-    CLEAR_SECONDS=$1
+    clear_seconds=$1
     ;;
   --clear=*)
-    CLEAR_SECONDS=${1#*=}
+    clear_seconds=${1#*=}
     ;;
   -h|--help)
     usage
     exit 1
     ;;
   -v|--verbose)
-    VERBOSE=Y
+    verbose=Y
     ;;
   *)
     err "Unknown option $1"
@@ -65,43 +66,40 @@ while [ -n "$1" ]; do
   shift
 done
 
-set -u
-if [ -z "$EDITOR_PATH" ]; then
+if [ -z "$editor_path" ]; then
   err "--editor=EDITOR is required"
   usage
   exit 3
 fi
-if [ ! -x "$EDITOR_PATH" ]; then
-  err "editor is not executable: $EDITOR_PATH"
+if [ ! -x "$editor_path" ]; then
+  err "editor is not executable: $editor_path"
   exit 4
 fi
-if [[ ! "$CLEAR_SECONDS" =~ ^[0-9]+$ ]]; then
+if [[ ! "$clear_seconds" =~ ^[0-9]+$ ]]; then
   err "--clear=N must be numeric"
   usage
   exit 5
 fi
 
-TEMPNAME=$(mktemp $TEMPDIR/stdin.XXXXXXXXXX.txt) || exit $?
+tempfile=$(mktemp "$tempdir/stdin.XXXXXXXXXX.txt")
 on_exit() {
-  sleep $CLEAR_SECONDS
-  if [ "$VERBOSE" == "Y" ]; then
-    rm -v "$TEMPNAME"
+  sleep $clear_seconds
+  if [ "$verbose" == "Y" ]; then
+    rm -v "$tempfile"
   else
-    rm "$TEMPNAME"
+    rm "$tempfile"
   fi
 }
-if [ $CLEAR_SECONDS -gt 0 ]; then
+if [ $clear_seconds -gt 0 ]; then
   trap 'on_exit &' EXIT
 fi
 
-if [ "$VERBOSE" == "Y" ]; then
-  tee "$TEMPNAME"
-  echo "--> $TEMPNAME"
+if [ "$verbose" == "Y" ]; then
+  tee "$tempfile"
+  echo "--> $tempfile"
 else
-  cat > "$TEMPNAME"
+  cat > "$tempfile"
 fi
 
-if [ $? -eq 0 ]; then
-  echo "starting $EDITOR_PATH $TEMPNAME ..."
-  "$EDITOR_PATH" "$TEMPNAME" 1>/dev/null 2>/dev/null &
-fi
+echo "starting $editor_path $tempfile ..."
+"$editor_path" "$tempfile" 1>/dev/null 2>/dev/null &
