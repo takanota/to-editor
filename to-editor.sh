@@ -96,9 +96,9 @@ stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
 if [ "$verbose" == "Y" ]; then
   tee "$stdin_file"
   echo "--> $stdin_file"
+  echo "starting $editor_cmdline $stdin_file ..."
 else
   cat > "$stdin_file"
 fi
 
-echo "starting $editor_cmdline $stdin_file ..."
 $editor_cmdline "$stdin_file"
