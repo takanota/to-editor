@@ -25,7 +25,7 @@ err() {
 }
 
 clear_stdin_file() {
-  if [ $clear_seconds -eq 0 ]; then
+  if [ "$clear_seconds" == "0" ]; then
     return
   fi
   if [ ! -f "$stdin_file" ]; then
