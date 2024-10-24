@@ -10,7 +10,7 @@ usage() {
   echo ""
   echo "parameter"
   echo "  -e, --editor=EDITOR editor path"
-  echo "  -d, --tmpdir=DIR    directory to create temporary file"
+  echo "  -d, --dir=DIR       directory to create temporary file"
   echo "                      (default: current directory)"
   echo "  -c, --clear=N       remove temporary file after N second(s)"
   echo "                      (0 to skip remove temporary file)"
@@ -23,9 +23,27 @@ err() {
   echo "[ERROR] $@" >/dev/stderr
 }
 
+clear_stdin_file() {
+  if [ $clear_seconds -eq 0 ]; then
+    return
+  fi
+  if [ ! -f "$stdin_file" ]; then
+    return
+  fi
+
+  sleep $clear_seconds
+  if [ "$verbose" == "Y" ]; then
+    rm -v "$stdin_file"
+  else
+    rm "$stdin_file"
+  fi
+}
+trap 'clear_stdin_file' EXIT
+
 verbose=N
 editor_path=
-tempdir=.
+stdin_dir=.
+stdin_file=
 clear_seconds=5
 
 while [ $# -gt 0 ]; do
@@ -37,12 +55,12 @@ while [ $# -gt 0 ]; do
   --editor=*)
     editor_path=${1#*=}
     ;;
-  -d|--tmpdir)
+  -d|--dir)
     shift
-    tempdir=$1
+    stdin_dir=$1
     ;;
-  --tmpdir=*)
-    tempdir=${1#*=}
+  --dir=*)
+    stdin_dir=${1#*=}
     ;;
   -c|--clear)
     shift
@@ -81,25 +99,13 @@ if [[ ! "$clear_seconds" =~ ^[0-9]+$ ]]; then
   exit 5
 fi
 
-tempfile=$(mktemp "$tempdir/stdin.XXXXXXXXXX.txt")
-on_exit() {
-  sleep $clear_seconds
-  if [ "$verbose" == "Y" ]; then
-    rm -v "$tempfile"
-  else
-    rm "$tempfile"
-  fi
-}
-if [ $clear_seconds -gt 0 ]; then
-  trap 'on_exit &' EXIT
-fi
-
+stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
 if [ "$verbose" == "Y" ]; then
-  tee "$tempfile"
-  echo "--> $tempfile"
+  tee "$stdin_file"
+  echo "--> $stdin_file"
 else
-  cat > "$tempfile"
+  cat > "$stdin_file"
 fi
 
-echo "starting $editor_path $tempfile ..."
-"$editor_path" "$tempfile" 1>/dev/null 2>/dev/null &
+echo "starting $editor_path $stdin_file ..."
+"$editor_path" "$stdin_file" 1>/dev/null 2>/dev/null &
