@@ -16,7 +16,7 @@ usage() {
   echo "    -c, --clear=N  remove temporary file after N second(s)"
   echo "                   (0 to skip remove temporary file)"
   echo "    -h, --help     show this help"
-  echo "    -v, --version  verbose output"
+  echo "    -v, --verbose  verbose output"
   echo ""
 }
 
