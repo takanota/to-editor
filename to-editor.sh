@@ -32,7 +32,7 @@ clear_stdin_file() {
     return
   fi
 
-  sleep $clear_seconds
+  sleep "$clear_seconds"
   if [ "$verbose" == "Y" ]; then
     rm -v "$stdin_file"
   else
@@ -52,17 +52,17 @@ while [ $# -gt 0 ]; do
     case "$1" in
     -d|--dir)
       shift
-      stdin_dir=$1
+      stdin_dir="$1"
       ;;
     --dir=*)
-      stdin_dir=${1#*=}
+      stdin_dir="${1#*=}"
       ;;
     -c|--clear)
       shift
-      clear_seconds=$1
+      clear_seconds="$1"
       ;;
     --clear=*)
-      clear_seconds=${1#*=}
+      clear_seconds="${1#*=}"
       ;;
     -h|--help)
       usage
