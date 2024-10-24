@@ -6,16 +6,17 @@ set -euo pipefail
 
 usage() {
   echo "usage"
-  echo "  $0 [OPTION...]"
+  echo "  $0 [OPTION...] CMDLINE"
   echo ""
-  echo "parameter"
-  echo "  -e, --editor=EDITOR editor path"
-  echo "  -d, --dir=DIR       directory to create temporary file"
-  echo "                      (default: current directory)"
-  echo "  -c, --clear=N       remove temporary file after N second(s)"
-  echo "                      (0 to skip remove temporary file)"
-  echo "  -h, --help          show this help"
-  echo "  -v, --version       verbose output"
+  echo "parameters"
+  echo "  CMDLINE          command line to open editor"
+  echo "  OPTION"
+  echo "    -d, --dir=DIR  directory to create temporary file"
+  echo "                   (default: current directory)"
+  echo "    -c, --clear=N  remove temporary file after N second(s)"
+  echo "                   (0 to skip remove temporary file)"
+  echo "    -h, --help     show this help"
+  echo "    -v, --version  verbose output"
   echo ""
 }
 
@@ -41,62 +42,54 @@ clear_stdin_file() {
 trap 'clear_stdin_file' EXIT
 
 verbose=N
-editor_path=
 stdin_dir=.
 stdin_file=
 clear_seconds=5
+editor_cmdline=
 
 while [ $# -gt 0 ]; do
-  case "$1" in
-  -e|--editor)
-    shift
-    editor_path=$1
-    ;;
-  --editor=*)
-    editor_path=${1#*=}
-    ;;
-  -d|--dir)
-    shift
-    stdin_dir=$1
-    ;;
-  --dir=*)
-    stdin_dir=${1#*=}
-    ;;
-  -c|--clear)
-    shift
-    clear_seconds=$1
-    ;;
-  --clear=*)
-    clear_seconds=${1#*=}
-    ;;
-  -h|--help)
-    usage
-    exit 1
-    ;;
-  -v|--verbose)
-    verbose=Y
-    ;;
-  *)
-    err "Unknown option $1"
-    usage
-    exit 2
-  esac
+  if [ -z "$editor_cmdline" ]; then
+    case "$1" in
+    -d|--dir)
+      shift
+      stdin_dir=$1
+      ;;
+    --dir=*)
+      stdin_dir=${1#*=}
+      ;;
+    -c|--clear)
+      shift
+      clear_seconds=$1
+      ;;
+    --clear=*)
+      clear_seconds=${1#*=}
+      ;;
+    -h|--help)
+      usage
+      exit 1
+      ;;
+    -v|--verbose)
+      verbose=Y
+      ;;
+    *)
+      editor_cmdline="$1"
+      ;;
+    esac
+  else
+    editor_cmdline="$editor_cmdline $1"
+  fi
   shift
 done
 
-if [ -z "$editor_path" ]; then
-  err "--editor=EDITOR is required"
+if [ -z "$editor_cmdline" ]; then
+  err "CMDLINE is required"
   usage
   exit 3
-fi
-if [ ! -x "$editor_path" ]; then
-  err "editor is not executable: $editor_path"
-  exit 4
 fi
 if [[ ! "$clear_seconds" =~ ^[0-9]+$ ]]; then
   err "--clear=N must be numeric"
   usage
-  exit 5
+  exit 4
 fi
 
 stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
@@ -107,5 +100,5 @@ else
   cat > "$stdin_file"
 fi
 
-echo "starting $editor_path $stdin_file ..."
-"$editor_path" "$stdin_file" 1>/dev/null 2>/dev/null &
+echo "starting $editor_cmdline $stdin_file ..."
+$editor_cmdline "$stdin_file"
