@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# to-editor.sh: open stdin to editor
+#
 
 usage() {
   echo "usage"
