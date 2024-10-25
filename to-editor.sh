@@ -45,10 +45,10 @@ verbose=N
 stdin_dir=.
 stdin_file=
 clear_seconds=5
-editor_cmdline=
+editor_cmdline=()
 
 while [ $# -gt 0 ]; do
-  if [ -z "$editor_cmdline" ]; then
+  if [ ${#editor_cmdline[@]} -eq 0 ]; then
     case "$1" in
     -d|--dir)
       shift
@@ -72,16 +72,16 @@ while [ $# -gt 0 ]; do
       verbose=Y
       ;;
     *)
-      editor_cmdline="$1"
+      editor_cmdline+=("$1")
       ;;
     esac
   else
-    editor_cmdline="$editor_cmdline $1"
+    editor_cmdline+=("$1")
   fi
   shift
 done
 
-if [ -z "$editor_cmdline" ]; then
+if [ ${#editor_cmdline[@]} -eq 0 ]; then
   err "CMDLINE is required"
   usage
   exit 3
@@ -96,9 +96,9 @@ stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
 if [ "$verbose" == "Y" ]; then
   tee "$stdin_file"
   echo "--> $stdin_file"
-  echo "starting $editor_cmdline $stdin_file ..."
+  echo "starting ${editor_cmdline[@]} $stdin_file ..."
 else
   cat > "$stdin_file"
 fi
 
-$editor_cmdline "$stdin_file"
+"${editor_cmdline[@]}" "$stdin_file"
