@@ -6,15 +6,17 @@ set -euo pipefail
 
 usage() {
   echo "usage"
-  echo "  $0 [OPTION...] CMDLINE"
+  echo "  $0 [OPTION...] EDITOR [- | CMDLINE...]"
   echo ""
   echo "parameters"
-  echo "  CMDLINE          command line to open editor"
+  echo "  EDITOR           editor executable"
+  echo "  CMDLINE          command line to open editor."
+  echo "                   '-' to open editor with stdin."
   echo "  OPTION"
-  echo "    -d, --dir=DIR  directory to create temporary file"
+  echo "    -d, --dir=DIR  directory to create stdin file"
   echo "                   (default: current directory)"
-  echo "    -c, --clear=N  remove temporary file after N second(s)"
-  echo "                   (0 to skip remove temporary file)"
+  echo "    -c, --clear=N  remove stdin file after N second(s)"
+  echo "                   ('0' to skip remove stdin file)"
   echo "    -h, --help     show this help"
   echo "    -v, --verbose  verbose output"
   echo ""
@@ -39,12 +41,11 @@ clear_stdin_file() {
     rm "$stdin_file"
   fi
 }
-trap 'clear_stdin_file' EXIT
 
 verbose=N
-stdin_dir=.
+stdin_dir=/tmp
 stdin_file=
-clear_seconds=5
+clear_seconds=0
 editor_cmdline=()
 
 while [ $# -gt 0 ]; do
@@ -75,6 +76,9 @@ while [ $# -gt 0 ]; do
       editor_cmdline+=("$1")
       ;;
     esac
+  elif [ "$1" = "-" ]; then
+    stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
+    editor_cmdline+=("$stdin_file")
   else
     editor_cmdline+=("$1")
   fi
@@ -82,7 +86,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ ${#editor_cmdline[@]} -eq 0 ]; then
-  err "CMDLINE is required"
+  err "EDITOR is required"
   usage
   exit 3
 fi
@@ -92,13 +96,15 @@ if [[ ! "$clear_seconds" =~ ^[0-9]+$ ]]; then
   exit 4
 fi
 
-stdin_file=$(mktemp "$stdin_dir/stdin.XXXXXXXXXX.txt")
-if [ "$verbose" == "Y" ]; then
-  tee "$stdin_file"
-  echo "--> $stdin_file"
-  echo "starting ${editor_cmdline[@]} $stdin_file ..."
-else
-  cat > "$stdin_file"
+if [ -n "$stdin_file" ]; then
+  trap 'clear_stdin_file' EXIT
+  if [ "$verbose" == "Y" ]; then
+    tee "$stdin_file"
+    echo "--> $stdin_file"
+    echo "starting ${editor_cmdline[@]} ..."
+  else
+    cat > "$stdin_file"
+  fi
 fi
 
-"${editor_cmdline[@]}" "$stdin_file"
+"${editor_cmdline[@]}" &
